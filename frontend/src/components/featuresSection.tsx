@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BarChart3, Link, QrCode, Zap, Clock, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';

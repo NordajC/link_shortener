@@ -172,7 +172,7 @@ import { toast } from "sonner";
 function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  // const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
@@ -180,7 +180,7 @@ function AuthForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    // setError("");
     setIsLoading(true);
 
     try {
@@ -197,7 +197,7 @@ function AuthForm() {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Failed to authenticate. Please try again.");
+      // setError(err.message || "Failed to authenticate. Please try again.");
       toast.error(err.message || "Failed to authenticate. Please try again.");
     } finally {
       setIsLoading(false);
@@ -206,7 +206,7 @@ function AuthForm() {
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
-    setError("");
+    // setError("");
     setEmail("");
     setPassword("");
   };

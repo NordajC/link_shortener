@@ -1,8 +1,6 @@
 import "./App.css";
-import Form from "./components/form";
 import AuthForm from "./components/authForm";
-import { Route, Link, Routes } from "react-router-dom";
-import { Navbar01 } from "./components/ui/shadcn-io/navbar-01/index";
+import { Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import Home from "./pages/home";
 import ProtectedRoute from "./routes/protectedRoute";

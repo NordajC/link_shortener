@@ -7,12 +7,12 @@ import { useRef } from "react";
 export default function Home() {
   const showcaseRef = useRef<HTMLDivElement>(null);
 
-  const handleScrollToShowcase = () => {
-    showcaseRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
+  // const handleScrollToShowcase = () => {
+  //   showcaseRef.current?.scrollIntoView({
+  //     behavior: "smooth",
+  //     block: "start",
+  //   });
+  // };
   return (
     <div className="w-full">
       <HeroSection />
