@@ -33,6 +33,8 @@ app.use('/api/url', url);
 // it then creates a new user id
 app.use('/api/auth', auth);
 
-app.listen(process.env.VITE_BACKEND_PORT, () => {
+const PORT = process.env.PORT || process.env.VITE_BACKEND_PORT || 3002;
+
+app.listen(PORT, () => {
   console.log(`Server is listening on port ${process.env.VITE_BACKEND_PORT}`);
 });

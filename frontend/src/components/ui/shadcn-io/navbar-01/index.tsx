@@ -6,46 +6,12 @@ import { useEffect, useState, useRef } from "react";
 import {
   NavigationMenu,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
 } from "../../navigation-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "../../popover";
 import { cn } from "../../../../lib/utils";
-import type { User } from "../../../../context/authContext/authContext.types"; // Import the User type
- // Import the User type
-
-// Simple logo component for the navbar
-const Logo = (props: React.SVGAttributes<SVGElement>) => {
-  return (
-    <svg
-      width="1em"
-      height="1em"
-      viewBox="0 0 324 323"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <rect
-        x="88.1023"
-        y="144.792"
-        width="151.802"
-        height="36.5788"
-        rx="18.2894"
-        transform="rotate(-38.5799 88.1023 144.792)"
-        fill="currentColor"
-      />
-      <rect
-        x="85.3459"
-        y="244.537"
-        width="151.802"
-        height="36.5788"
-        rx="18.2894"
-        transform="rotate(-38.5799 85.3459 244.537)"
-        fill="currentColor"
-      />
-    </svg>
-  );
-};
+import type { User } from "../../../../context/authContext/authContext.types";
+import { Link2Off } from "lucide-react"; // Import the new icon
 
 // Hamburger icon component
 const HamburgerIcon = ({
@@ -104,18 +70,18 @@ export interface Navbar01Props extends React.HTMLAttributes<HTMLElement> {
 
 // Default navigation links
 const defaultNavigationLinks: Navbar01NavLink[] = [
-  { href: "#", label: "Home", active: true },
+  { href: "#", label: "Home" },
+  { href: "#how-it-works", label: "How It Works" },
   { href: "#features", label: "Features" },
   { href: "#pricing", label: "Pricing" },
-  { href: "#about", label: "About" },
 ];
 
 export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
   (
     {
       className,
-      logo = <Logo />,
-      logoHref = "#",
+      logo = <Link2Off />, // Updated Logo
+      logoHref = "/",
       navigationLinks = defaultNavigationLinks,
       signInText = "Log In",
       signInHref = "#signin",
@@ -195,8 +161,8 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
                     <NavigationMenuList className="flex-col items-start gap-1">
                       {navigationLinks.map((link, index) => (
                         <NavigationMenuItem key={index} className="w-full">
-                          <button
-                            onClick={(e) => e.preventDefault()}
+                          <a // Changed to <a> tag
+                            href={link.href}
                             className={cn(
                               "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer no-underline",
                               link.active
@@ -205,7 +171,7 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
                             )}
                           >
                             {link.label}
-                          </button>
+                          </a>
                         </NavigationMenuItem>
                       ))}
                     </NavigationMenuList>
@@ -215,23 +181,23 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
             )}
             {/* Main nav */}
             <div className="flex items-center gap-6">
-              <button
-                onClick={(e) => e.preventDefault()}
+              <a // Changed to <a> tag
+                href={logoHref}
                 className="flex items-center space-x-2 text-primary hover:text-primary/90 transition-colors cursor-pointer"
               >
                 <div className="text-2xl">{logo}</div>
                 <span className="hidden font-bold text-xl sm:inline-block">
-                  shadcn.io
+                  LinkSnip {/* Updated Title */}
                 </span>
-              </button>
+              </a>
               {/* Navigation menu */}
               {!isMobile && (
                 <NavigationMenu className="flex">
                   <NavigationMenuList className="gap-1">
                     {navigationLinks.map((link, index) => (
                       <NavigationMenuItem key={index}>
-                        <button
-                          onClick={(e) => e.preventDefault()}
+                        <a // Changed to <a> tag
+                          href={link.href}
                           className={cn(
                             "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
                             link.active
@@ -240,7 +206,7 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
                           )}
                         >
                           {link.label}
-                        </button>
+                        </a>
                       </NavigationMenuItem>
                     ))}
                   </NavigationMenuList>
@@ -297,5 +263,3 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
 );
 
 Navbar01.displayName = "Navbar01";
-
-export { Logo, HamburgerIcon };

@@ -23,7 +23,7 @@ const FeatureCallout = ({ children, className }: { children: React.ReactNode; cl
 export const DashboardShowcase = () => {
   return (
     // Fixed overflow issues with proper container structure
-    <section className="py-20 bg-muted/50 overflow-hidden">
+    <section className="py-20 bg-gradient-to-b from-background via-muted/20 to-background overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold">A Dashboard Built for Control</h2>
@@ -35,13 +35,13 @@ export const DashboardShowcase = () => {
         {/* Main container for the mock-up and callouts - with proper overflow handling */}
         <div className="relative max-w-5xl mx-auto">
           {/* Feature Callouts - positioned more carefully to avoid overflow */}
-          <FeatureCallout className="top-[10%] right-full mr-2 xl:mr-4">
+          <FeatureCallout className="top-[10%] right-10/12 ml-2 xl:ml-6">
             Visualize your traffic
           </FeatureCallout>
-          <FeatureCallout className="top-[35%] left-full ml-2 xl:ml-4">
+          <FeatureCallout className="top-[35%] right-10/12 ml-4 xl:ml-6">
             Customize links with names
           </FeatureCallout>
-          <FeatureCallout className="bottom-[20%] right-full mr-2 xl:mr-4">
+          <FeatureCallout className="bottom-[20%] right-10/12 ml-4 xl:ml-6">
             Manage links with ease
           </FeatureCallout>
 

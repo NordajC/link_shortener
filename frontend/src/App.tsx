@@ -13,7 +13,7 @@ function App() {
   return (
     <>
       <NavbarWrapper />
-      <main className="dark min-h-screen bg-background flex items-center justify-center p-4 w-full sm:p-6 lg:p-8">
+      <main className="dark min-h-screen bg-background flex items-center justify-center p-0 w-full sm:p-0 lg:p-0">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<AuthForm />} />
