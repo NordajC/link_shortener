@@ -10,7 +10,6 @@ import {
 import { MoreHorizontal, BarChart2, CalendarOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { getUserUrls, deleteUrl } from '../services/urlService';
-import type { Url } from '../services/urlService';
 import { CreateLinkForm } from '../components/createLinkForm';
 import { AnalyticsDashboard } from '../components/analyticsDashboard';
 
