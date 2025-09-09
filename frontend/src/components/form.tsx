@@ -1,18 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 function Form(){
 
   const [longUrl, setLongUrl] = useState('');
   const [shortUrl, setShortUrl] = useState('');
   const [error, setError] = useState('');
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async(e:React.FormEvent) => {
     e.preventDefault();
 
-
-
     try{
-      const res = await fetch('http://localhost:3002/api/url' , {
+      const res = await fetch(`${apiUrl}/api/url/createShortUrl` , {
         method: 'POST',
         headers: { "Content-Type" : "application/json"},
         body: JSON.stringify({ longUrl: longUrl }),

@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
-const {body, validationResult} = require('express-validator');
-const { Router } = require('express');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
   email:{
@@ -14,10 +13,6 @@ const userSchema = new mongoose.Schema({
   }
 }, {timestamps: true});
 
-const User = mongoose.model('User', userSchema)
-
-module.exports = User;//exports user module so you can access it outside this file
-
 userSchema.pre('save', async function(next) {
 
   //checks if user has been changed or is new
@@ -30,26 +25,6 @@ userSchema.pre('save', async function(next) {
   next();
 })
 
-router.post(
-  '/signup',
-  [
-    // Validation rules go here
-    body('email').isEmail(),
-    // We can add more rules, like for the password
-    body('password').isLength({ min: 8 })
-  ],
-  (req, res) => {
-    // Your main logic for creating a user goes here
+const User = mongoose.model('User', userSchema)
 
-    const errors = validationResult(req);
-    const email = req.body.email;
-    const password = req.body.password;
-
-    if(errors.isEmpty()){
-
-    }else{
-      
-    }
-
-  }
-);
+module.exports = User;//exports user module so you can access it outside this file
