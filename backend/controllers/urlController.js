@@ -1,7 +1,8 @@
 const Url = require("../models/Urls.js");
 require("dotenv").config(); // Loads variables from .env fileconst shortUrl = `http://localhost:${PORT}/api/url/${shortCode}`;const shortUrl = `http://localhost:${PORT}/api/url/${shortCode}`;
 const User = require("../models/User.js");
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
+const redisClient = require("../redis/redisClient.js");
 
 async function createShortUrl(req, res) {
   const { longUrl, expiresAt, name } = req.body;
@@ -41,9 +42,17 @@ async function createShortUrl(req, res) {
 }
 
 async function getLongUrl(req, res) {
-  const shortCode = req.params.shortCode;
+  const { shortCode } = req.params;
 
   try {
+    //check cache
+    const cachedLongUrl = await redisClient.get(shortCode);
+
+    if (cachedLongUrl) {
+      console.log(cachedLongUrl)
+      return res.redirect(cachedLongUrl);
+    }
+
     let url = await Url.findOne({ shortCode: shortCode });
 
     if (!url) {
@@ -58,8 +67,11 @@ async function getLongUrl(req, res) {
       });
     }
 
+    //populate cache using fire and forget method. send db update without making user wait for it
     url.clicks.push({ timestamp: new Date() });
-    await url.save();
+    url.save();
+
+    redisClient.set(shortCode, url.longUrl, {EX: 3600});
 
     return res.redirect(url.longUrl);
   } catch (e) {
@@ -87,6 +99,9 @@ async function deleteUrl(req, res) {
         .status(403)
         .json({ error: "You are not authorized to delete this URL" });
     }
+
+    // delete from cache
+    await redisClient.del(url.shortCode);
 
     await Url.findByIdAndDelete(id);
     await User.findByIdAndUpdate(userId, { $pull: { urls: id } });
@@ -203,4 +218,11 @@ async function createPublicShortUrl(req, res) {
   }
 }
 
-module.exports = { createShortUrl, getLongUrl, deleteUrl, getUserUrls, getAnalytics, createPublicShortUrl };
+module.exports = {
+  createShortUrl,
+  getLongUrl,
+  deleteUrl,
+  getUserUrls,
+  getAnalytics,
+  createPublicShortUrl,
+};

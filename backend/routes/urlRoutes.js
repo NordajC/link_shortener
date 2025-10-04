@@ -16,7 +16,7 @@ router.post('/createShortUrl', [ authMiddleware ] , createShortUrl);
 router.get('/analytics', authMiddleware, getAnalytics);
 
 //get long url form DB
-router.get('/:shortCode', getLongUrl );
+// router.get('/:shortCode', getLongUrl );
 
 //delete url
 router.delete('/:id', authMiddleware, deleteUrl);

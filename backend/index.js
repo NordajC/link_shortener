@@ -5,7 +5,9 @@ require('dotenv').config(); // Loads variables from .env file
 const cors = require('cors')
 const auth = require('./routes/authRoutes.js');
 const url = require('./routes/urlRoutes.js');
+const {getLongUrl} = require('./controllers/urlController.js')
 const cookieParser = require('cookie-parser');
+require('./redis/redisClient.js');
 
 const corsOptions = {
   origin: process.env.VITE_FRONTEND_URL, // frontend URL
@@ -26,7 +28,7 @@ app.use(cookieParser());
 // The key will be the short code, the value will be the long URL
 // const urlDatabase = {};
 
-app.use('/api/url', url);
+app.use('/', url);
 
 //use function that identifies the selected path and routes it to the authRouter
 //auth router has a custom middle ware that validates user credentials in authController
