@@ -35,6 +35,10 @@ app.use('/', url);
 // it then creates a new user id
 app.use('/api/auth', auth);
 
+app.use('/api/url', url);
+
+app.get('/:shortCode', getLongUrl)
+
 const PORT = process.env.PORT || process.env.VITE_BACKEND_PORT || 3002;
 
 app.listen(PORT, () => {
