@@ -192,7 +192,7 @@ export const HeroSection = () => {
     }
   };
 
-  const fullShortUrl = `${apiUrl}/api/url/${shortCode}`;
+  const fullShortUrl = `${apiUrl}/${shortCode}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(fullShortUrl);

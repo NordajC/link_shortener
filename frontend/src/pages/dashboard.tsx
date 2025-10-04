@@ -58,7 +58,7 @@ export default function Dashboard() {
   };
 
   const handleCopy = (shortCode: string) => {
-    const fullShortUrl = `${apiUrl}/api/url/${shortCode}`;
+    const fullShortUrl = `${apiUrl}/${shortCode}`;
     navigator.clipboard.writeText(fullShortUrl);
     toast.success('Link copied to clipboard!');
   };
@@ -112,8 +112,8 @@ export default function Dashboard() {
                 </DropdownMenu>
               </CardHeader>
               <CardContent className="space-y-4">
-                 <p className="text-sm text-blue-500 group-hover:underline truncate" title={`${apiUrl}/api/url/${url.shortCode}`}>
-                    {`${apiUrl.replace(/https?:\/\//, '')}/api/url/${url.shortCode}`}
+                 <p className="text-sm text-blue-500 group-hover:underline truncate" title={`${apiUrl}/${url.shortCode}`}>
+                    {`${apiUrl.replace(/https?:\/\//, '')}/${url.shortCode}`}
                 </p>
                 <div className="flex items-center text-xs text-muted-foreground space-x-4">
                     <div className="flex items-center">
