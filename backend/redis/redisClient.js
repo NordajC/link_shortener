@@ -1,4 +1,10 @@
 const redis = require('redis');
+require('dotenv').config();// Load variables from .env file
+const logger = require('../config/logger.js');
+const redisLogger = logger.child({
+  service: 'redis-client',
+});
+
 const redisClient = redis.createClient({
     username: 'default',
     password: process.env.REDIS_PASSWORD,
@@ -8,14 +14,14 @@ const redisClient = redis.createClient({
     }
 });
 
-redisClient.on('error', err => console.log('Redis Client Error', err));
+redisClient.on('error', err => redisLogger.error({message: 'Redis Client Error', error: err}));
 
 (async () => {
     try {
         await redisClient.connect();
-        console.log('Redis connected successfully.');
+        redisLogger.info({message: 'Connected to Redis successfully'});
     } catch (err) {
-        console.error('Redis connection error:', err);
+        redisLogger.error({message: 'Redis connection error', error: err});
     }
 })();
 

@@ -23,8 +23,8 @@ const FeatureCallout = ({ children, className }: { children: React.ReactNode; cl
 export const DashboardShowcase = () => {
   return (
     // Fixed overflow issues with proper container structure
-    <section className="py-20 bg-gradient-to-b from-background via-muted/20 to-background overflow-hidden">
-      <div className="container mx-auto px-4">
+    <section className="py-20 bg-gradient-to-b from-background via-muted/20 to-background overflow-hidden px-4">
+      <div className="container mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold">A Dashboard Built for Control</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mt-2">

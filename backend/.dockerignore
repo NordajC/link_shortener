@@ -1,0 +1,16 @@
+# Ignore local development dependencies
+node_modules
+
+# Ignore local environment files (these will be set on the EC2 instance)
+.env
+.env.*
+
+# Ignore test files
+__test__
+*.test.js
+
+# Ignore Docker and Git files
+Dockerfile
+.dockerignore
+.git
+.gitignore

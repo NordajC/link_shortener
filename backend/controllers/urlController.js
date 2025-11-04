@@ -3,12 +3,31 @@ require("dotenv").config(); // Loads variables from .env fileconst shortUrl = `h
 const User = require("../models/User.js");
 const mongoose = require("mongoose");
 const redisClient = require("../redis/redisClient.js");
+const logger = require("../config/logger.js");
+
+const urlLogger = logger.child({
+  service: "url-controller",
+});
 
 async function createShortUrl(req, res) {
   const { longUrl, expiresAt, name } = req.body;
+
+  if (!req.user || !req.user.id) {
+    urlLogger.error({
+      message: "createShortUrl called without authenticated user",
+      ip: req.ip,
+    });
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const userId = req.user.id;
 
   if (!longUrl) {
+    urlLogger.warn({
+      message: "createShortUrl failed: longUrl is required.",
+      ip: req.ip,
+      userId: userId,
+    });
     return res.status(400).json({
       error: "longUrl is required",
     });
@@ -21,19 +40,33 @@ async function createShortUrl(req, res) {
       shortCode,
       longUrl,
       user: userId,
-      expiresAt,
+      expiresAt: expiresAt || null,
       name,
     });
 
     //const shortUrl = `http://localhost:${PORT}/api/url/${shortCode}`;
 
+    //adds url to user urls
     await User.findByIdAndUpdate(userId, { $push: { urls: newUrl._id } });
+
+    // sucessful url creation logging
+    urlLogger.info({
+      message: "Short URL created successfully",
+      userId: userId, // Include relevant context
+      shortCode: newUrl.shortCode,
+      longUrl: newUrl.longUrl,
+    });
 
     return res.status(201).json({
       shortCode: shortCode,
     });
   } catch (e) {
-    console.log(e);
+    urlLogger.error({
+      message: "Error creating short URL",
+      error: e,
+      userId: userId,
+      longUrl: longUrl,
+    });
 
     return res.status(500).json({
       error: "Server error occurred",
@@ -49,33 +82,67 @@ async function getLongUrl(req, res) {
     const cachedLongUrl = await redisClient.get(shortCode);
 
     if (cachedLongUrl) {
-      console.log(cachedLongUrl)
+      // Fire-and-forget click update in background (if needed for cached hits)
+      // This is more complex, might involve a separate process or queue.
+      // For simplicity now, we only update clicks on DB fetch.
       return res.redirect(cachedLongUrl);
     }
 
+    // Cache miss, fetch from DB
+    urlLogger.info({
+      message: "Cache miss for shortCode",
+      shortCode: shortCode,
+    });
     let url = await Url.findOne({ shortCode: shortCode });
 
+    //
     if (!url) {
+      logger.urlLogger({
+        message: "User tried to access non-existing short URL",
+        ip: req.ip,
+      });
+
       return res.status(404).json({
-        error: "no such link was shortened",
+        error: "No such link was shortened",
       });
     }
 
     if (url.expiresAt && new Date() > url.expiresAt) {
+      urlLogger.warn({
+        message: "User tried to access expired URL",
+        shortCode: shortCode,
+        ip: req.ip,
+        expiresAt: url.expiresAt,
+        urlId: url._id,
+      });
+
       return res.status(410).json({
         error: "Link has expired",
       });
     }
 
-    //populate cache using fire and forget method. send db update without making user wait for it
-    url.clicks.push({ timestamp: new Date() });
-    url.save();
+    // Populate cache with TTL
+    await redisClient.set(shortCode, url.longUrl, { EX: 3600 }); // Set expiry for 1 hour
+    urlLogger.info({
+      message: "Populated cache for shortCode",
+      shortCode: shortCode,
+    });
 
-    redisClient.set(shortCode, url.longUrl, {EX: 3600});
+    // Fire-and-forget click update
+    url.clicks.push({ timestamp: new Date() });
+    url.save().catch((err) => {
+      // Add error handling for the background save
+      urlLogger.error({
+        message: "Background click save failed",
+        shortCode: shortCode,
+        urlId: url._id,
+        error: err,
+      });
+    });
 
     return res.redirect(url.longUrl);
   } catch (e) {
-    console.log(e);
+    urlLogger.error({ message: "Error retrieving long URL.", error: e });
 
     return res.status(500).json({
       error: "Server error occurred",
@@ -85,16 +152,34 @@ async function getLongUrl(req, res) {
 
 async function deleteUrl(req, res) {
   const { id } = req.params;
+
+  if (!req.user || !req.user.id) {
+    urlLogger.error({
+      message: "deleteUrl called without authenticated user",
+      ip: req.ip,
+    });
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const userId = req.user.id;
 
   try {
     const url = await Url.findById(id);
 
     if (!url) {
+      urlLogger.warn({
+        message: "user tried to delete a non-exisiting URL",
+        ip: req.ip,
+      });
       return res.status(404).json({ error: "URL not found" });
     }
 
     if (url.user.toString() !== userId) {
+      logger.urlLogger({
+        message: "Unauthorized URL deletion attempt",
+        ip: req.ip,
+      });
+
       return res
         .status(403)
         .json({ error: "You are not authorized to delete this URL" });
@@ -106,14 +191,30 @@ async function deleteUrl(req, res) {
     await Url.findByIdAndDelete(id);
     await User.findByIdAndUpdate(userId, { $pull: { urls: id } });
 
+    urlLogger.info({
+      message: "URL deleted successfully",
+      userId: userId,
+      urlId: id,
+    });
     res.status(200).json({ message: "URL deleted successfully" });
   } catch (error) {
-    console.error(error);
+    urlLogger.error({
+      message: "Server error occurred. Could not delete URL.",
+      error: error,
+    });
     res.status(500).json({ error: "Server error" });
   }
 }
 
 async function getUserUrls(req, res) {
+  if (!req.user || !req.user.id) {
+    urlLogger.error({
+      message: "getUserUrls called without authenticated user",
+      ip: req.ip,
+    });
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const userId = req.user.id;
   try {
     // 👇 We add 'select' to control the fields returned.
@@ -123,16 +224,30 @@ async function getUserUrls(req, res) {
       select: "name longUrl shortCode expiresAt createdAt clickCount",
     });
     if (!user) {
+      urlLogger.warn({
+        message: "User not found when fetching URLs",
+        ip: req.ip,
+      });
       return res.status(404).json({ error: "User not found" });
     }
+
+    urlLogger.info({ message: "Fetched URLs for user", userId: userId });
     res.json(user.urls);
   } catch (error) {
-    console.log(error);
+    urlLogger.error({ message: "Server error occurred.", error: error });
     res.status(500).json({ error: "Server error" });
   }
 }
 
 async function getAnalytics(req, res) {
+  if (!req.user || !req.user.id) {
+    urlLogger.error({
+      message: "getAnalytics called without authenticated user",
+      ip: req.ip,
+    });
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const userId = req.user.id;
   try {
     const userUrls = await Url.find({ user: userId });
@@ -182,9 +297,11 @@ async function getAnalytics(req, res) {
       chartData,
     };
 
+    urlLogger.info({ message: "Fetched analytics for user", userId: userId });
+
     res.status(200).json(analytics);
   } catch (error) {
-    console.error(error);
+    urlLogger.error({ message: "Error fetching analytics.", error: error });
     res.status(500).json({ error: "Server error while fetching analytics" });
   }
 }
@@ -194,26 +311,49 @@ async function createPublicShortUrl(req, res) {
   const { longUrl } = req.body;
 
   if (!longUrl) {
+    urlLogger.warn({
+      message: "createPublicShortUrl failed: longUrl is required.",
+      ip: req.ip,
+    });
     return res.status(400).json({ error: "longUrl is required" });
   }
 
   try {
+    urlLogger.info("Attempting to generate shortCode..."); // Log 1
     const shortCode = Math.random().toString(36).substring(2, 8);
 
     // Set expiration date to 7 days from now
+    urlLogger.info("Attempting to generate expiresAt..."); // Log 1
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
+    urlLogger.info("Attempting to generate newUrl..."); // Log 1
     const newUrl = await Url.create({
       longUrl,
       shortCode,
-      expiresAt,
-      // No user is associated with this link
+      expiresAt: expiresAt, // Set to 7 days from now
+      user: null // No user is associated with this link
     });
+    urlLogger.info("shortcode created"); // Log 1
 
+    
+    if (!newUrl || !newUrl.shortCode) {
+      urlLogger.error({
+        message: "Failed to create public short URL: No shortCode returned",
+        longUrl: longUrl,
+      });
+      return res.status(500).json({ error: "Failed to create short URL" });
+    }
+
+    urlLogger.info({
+      message: "Public short URL created successfully",
+      shortCode: newUrl.shortCode,
+      longUrl: newUrl.longUrl,
+    });
     return res.status(201).json({ shortCode: newUrl.shortCode });
   } catch (e) {
-    console.log(e);
+    console.error(">>> DEBUG: Entering createPublicShortUrl CATCH block <<<", e); // Add this line
+    urlLogger.error({ message: "Error creating public short URL", error: e });
     return res.status(500).json({ error: "Server error occurred" });
   }
 }

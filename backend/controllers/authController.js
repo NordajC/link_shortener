@@ -4,6 +4,11 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config(); // Loads variables from .env file
 const bcrypt = require("bcrypt");
 const { response } = require("express");
+const logger = require("../config/logger.js");
+
+const authLogger = logger.child({
+  service: "auth-controller",
+});
 
 // signup function, this creates a new user document
 async function signupUser(req, res) {
@@ -19,6 +24,11 @@ async function signupUser(req, res) {
     // 🔐 Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      authLogger.warn({
+        message: "Signup attempt with existing email",
+        email: email,
+        ip: req.ip,
+      });
       return res.status(409).json({
         error: "User with that email already exists.",
       });
@@ -33,6 +43,13 @@ async function signupUser(req, res) {
       expiresIn: "1h",
     });
 
+    authLogger.info({
+      message: "New user signed up successfully",
+      userId: newUser.id,
+      email: newUser.email,
+      ip: req.ip,
+    });
+
     return res
       .cookie("jwt_token", sessionToken, {
         httpOnly: true,
@@ -40,7 +57,7 @@ async function signupUser(req, res) {
         sameSite: "Strict",
         maxAge: 60 * 60 * 1000,
       })
-      .status(200)
+      .status(201)
       .json({
         message: "Logged in successfully",
         user: {
@@ -50,7 +67,6 @@ async function signupUser(req, res) {
         },
       });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       error: "An unexpected error occurred. Please try again later.",
     });
@@ -67,6 +83,12 @@ async function loginUser(req, res) {
 
   try {
     if (!errors.isEmpty()) {
+      authLogger.warn({
+        message: "Login attempt with invalid input",
+        email: email,
+        ip: req.ip,
+      });
+
       return res.status(401).json({
         error: "Invalid credentials. Please double-check and try again.",
       });
@@ -77,6 +99,12 @@ async function loginUser(req, res) {
     });
 
     if (!currentUser) {
+      authLogger.warn({
+        message: "User login failed due to non-existing email",
+        email: email,
+        ip: req.ip,
+      });
+
       return res.status(401).json({
         error: "Invalid credentials. Please double-check and try again.",
       });
@@ -85,6 +113,12 @@ async function loginUser(req, res) {
     const isMatch = await bcrypt.compare(password, currentUser.password);
 
     if (!isMatch) {
+      authLogger.warn({
+        message: "User login failed due to incorrect password",
+        email: email,
+        ip: req.ip,
+      });
+
       return res.status(401).json({
         error: "Invalid credentials. Please double-check and try again.",
       });
@@ -95,6 +129,13 @@ async function loginUser(req, res) {
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+
+    authLogger.info({
+      message: "User logged in successfully",
+      userId: currentUser.id,
+      email: currentUser.email,
+      ip: req.ip,
+    });
 
     //return http only cookie
     return res
@@ -114,7 +155,7 @@ async function loginUser(req, res) {
         },
       });
   } catch (error) {
-    console.log(error);
+    authLogger.error({ message: "Error during user login", error: error });
 
     return res.status(500).json({
       error: error,
@@ -125,7 +166,11 @@ async function loginUser(req, res) {
 async function verifyUser(req, res) {
   const verifyUser = req.user;
 
-  if(!verifyUser){
+  if (!verifyUser) {
+    authLogger.warn({
+      message: "Unauthorized access attempt to verifyUser",
+      ip: req.ip,
+    });
     return res.status(401).json({ error: "Unauthorized" });
   }
 
@@ -144,8 +189,8 @@ function logoutUser(req, res) {
   // Clear the jwt_token cookie
   res.clearCookie("jwt_token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // ✅ Only secure in prod
-    sameSite: "lax", // ✅ Or "strict" depending on frontend/backend domains
+    secure: process.env.NODE_ENV === "production", // Only secure in prod
+    sameSite: "lax", // Or "strict" depending on frontend/backend domains
   });
 
   return res.status(200).json({ message: "Logged out successfully" });

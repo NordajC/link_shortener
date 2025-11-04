@@ -22,7 +22,7 @@ const tiers = [
 
 export const PricingSection = () => {
   return (
-    <section className="py-20">
+    <section className="py-20 px-4">
       <div className="container mx-auto">
         <div className="text-center mb-12">
             <h2 className="text-3xl font-bold">Find the Perfect Plan</h2>
